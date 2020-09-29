@@ -31,7 +31,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 Proxy::Proxy()
-    : _initalized(false)
+    : _initialized(false)
     , _port(-1) {
 }
 
@@ -46,10 +46,10 @@ void Proxy::Init(std::shared_ptr<Connection> connection,
 }
 
 void Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
-  if(_initalized)
+  if(_initialized)
     return;
 
-  _initalized = true;
+  _initialized = true;
 
   if(err == NetError::OK) {
     _client = client;

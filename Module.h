@@ -33,16 +33,20 @@ public:
   public:
     Property(int type,
              const std::string& name,
-             const std::string& defualt_value);
+             const std::string& defualt_value,
+             bool read_only);
+    void SetValue(const std::string& value);
     int _type;
     std::string _name;
-    std::string _default_value;
+    std::string _value;
+    bool _read_only;
   };
 
   Module(int id,
          const std::string& name,
          const std::vector<Property>& props,
          void(*callback)(int, int, const int*, const char* const*));
+  void SetPropertyValue(int property_id, const std::string& value);
   int _id;
   std::string _name;
   std::vector<Property> _properties;

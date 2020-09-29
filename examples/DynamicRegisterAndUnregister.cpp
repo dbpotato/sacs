@@ -34,7 +34,7 @@ void callback(int module_id, int count, const int* property_no, const char* cons
         return;
 
       std::vector<ModuleProperty> properties;
-      properties.emplace_back(ModuleProperty::Type::TEXT_AREA_RO, "Info", "Hello World");
+      properties.emplace_back(ModuleProperty::Type::TEXT_AREA_BT, "Info", "Hello World");
       g_tmp_mod_id = SacsWrapper::Instance().RegisterModule("Temporary Module", properties, nullptr);
      }
      else{

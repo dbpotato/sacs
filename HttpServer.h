@@ -52,6 +52,8 @@ public:
   bool Init(std::shared_ptr<Connection> connection,
             std::shared_ptr<ModuleManager> module_mgr,
             int port);
+
+  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
   bool IsRaw() override;
 
@@ -66,7 +68,7 @@ private:
   void PrepareXhrResponse(Request& req);
   void PrepareErrorResponse(Request& req);
 
-  void AddEventListener(int id, std::weak_ptr<Client> client);
+  void AddEventListener(std::shared_ptr<Client> client);
   void NotifyEventListeners(const std::string& msg);
 
   std::shared_ptr<Server> _server;

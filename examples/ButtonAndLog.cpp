@@ -22,22 +22,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include <unistd.h>
+#include <sstream>
+
 #include "SacsWrapper.h"
 
 int g_counter = 0;
+int g_enabled = 0;
 
 void callback(int module_id, int count, const int* property_no, const char* const* property_val) {
-  if(count == 1 && *property_no == 1) { // sanity check
-    std::vector<std::pair<int, std::string> > properties;
+  if(count == 1) { // sanity check
+    if(*property_no == 1) {
+      std::vector<std::pair<int, std::string> > properties;
+      std::stringstream str_stream;
 
-    std::string value;
-    if((++g_counter % 6))
-      value = std::to_string(g_counter);
-    else
-      g_counter = 0;
-
-    properties.emplace_back(0, value);
-    SacsWrapper::Instance().UpdateProperties(module_id, properties);
+      if((++g_counter % 6))
+        str_stream << (g_enabled ? "Enabled" : "Disabled")  << " : " << g_counter;
+      else
+        g_counter = 0;
+      properties.emplace_back(0, str_stream.str());
+      SacsWrapper::Instance().UpdateProperties(module_id, properties);
+    }
+    else if(*property_no == 2) { 
+      g_enabled = std::atoi(property_val[0]);  
+    }
   }
 }
 
@@ -48,6 +55,7 @@ int main() {
   std::vector<ModuleProperty> properties;
   properties.emplace_back(ModuleProperty::Type::LOG, "Log");
   properties.emplace_back(ModuleProperty::Type::BUTTON, "Add Entry");
+  properties.emplace_back(ModuleProperty::Type::BUTTON_SW, "Enabled", std::to_string(g_enabled));
   SacsWrapper::Instance().RegisterModule("Button and Log", properties, callback);
 
   while(true)

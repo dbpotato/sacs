@@ -97,7 +97,7 @@ void ProxyServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<M
       {
         int id = LocalIdFromRemote(json.FindId(), client->GetId());
         json.SetId(id);
-        _module_mgr->UpdateProperties(json);
+        _module_mgr->UpdateProperties(id, json);
       }
       break;
     default:

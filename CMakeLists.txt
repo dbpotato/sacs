@@ -22,6 +22,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ]]
 
 cmake_minimum_required(VERSION 3.2)
+project(Sacs)
 
 set(CXX_FLAGS
  "-O2 \

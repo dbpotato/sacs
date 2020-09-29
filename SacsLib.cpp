@@ -43,6 +43,7 @@ int register_module(const char* module_name,
                     int* propert_types,
                     char** properties_names,
                     char** properties_defaults,
+                    char* properties_read_only,
                     void(callback)(int, int, const int*, const char* const*)) {
   if(!g_mgr)
     return -2;
@@ -50,15 +51,14 @@ int register_module(const char* module_name,
   std::vector<Module::Property> vec_props;
 
   for(int i = 0; i < properties_count; ++i) {
-    vec_props.emplace_back(*(propert_types + i), *(properties_names + i), *(properties_defaults + i));
+    vec_props.emplace_back(*(propert_types + i), *(properties_names + i), *(properties_defaults + i), *(properties_read_only + i));
   }
 
   return g_mgr->RegisterModule(module_name, vec_props, callback);
 }
 
-bool unregister_module(int module_id) {
+void unregister_module(int module_id) {
   g_mgr->UnregisterModule(module_id);
-  return true; //TODO
 }
 
 void update_properties(int module_id,

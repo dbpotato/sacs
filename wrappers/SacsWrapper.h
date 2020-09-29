@@ -34,6 +34,7 @@ const int SACS_PORT = 8079;
 struct ModuleProperty {
   enum Type {
     BUTTON = 0,
+    BUTTON_SW,
     TEXT,
     TEXT_BT,
     TEXT_RO,
@@ -58,8 +59,8 @@ struct ModuleProperty {
 class SacsWrapper {
 private :
   void(*_init)(int);
-  int(*_register_module)(const char*, int, int*, char**, char**, void(*)(int, int, const int*, const char* const*));
-  bool(*_unregister_module)(int);
+  int(*_register_module)(const char*, int, int*, char**, char**, char*, void(*)(int, int, const int*, const char* const*));
+  void(*_unregister_module)(int);
   void(*_update_properties)(int, int, int*, char**);
   bool _is_valid;
   void* _lib_handler;
@@ -76,8 +77,8 @@ protected:
     }
     else {
       _init = (void(*)(int)) dlsym(_lib_handler, "init");
-      _register_module = (int(*)(const char*, int, int*, char**, char**, void(*)(int, int, const int*, const char* const*))) dlsym(_lib_handler, "register_module");
-      _unregister_module = (bool(*)(int)) dlsym(_lib_handler, "unregister_module");
+      _register_module = (int(*)(const char*, int, int*, char**, char**, char*, void(*)(int, int, const int*, const char* const*))) dlsym(_lib_handler, "register_module");
+      _unregister_module = (void(*)(int)) dlsym(_lib_handler, "unregister_module");
       _update_properties = (void(*)(int, int, int*, char**)) dlsym(_lib_handler, "update_properties");
 
       if(_init && _register_module && _update_properties && _unregister_module) {
@@ -101,15 +102,17 @@ protected:
     }
     return res;
   }
-public:
-  static SacsWrapper& Instance() {
-    static SacsWrapper instance;
-    return instance;
+
+  char IsPropertyTypeForReadOnly(ModuleProperty::Type type) {
+    if (type == ModuleProperty::Type::SCRIPT)
+      return 1;
+    return 0;
   }
 
-  ~SacsWrapper() {
-    if(_lib_handler)
-      dlclose(_lib_handler);
+public:
+  static SacsWrapper& Instance() {
+    static SacsWrapper& instance = *new SacsWrapper();
+    return instance;
   }
 
   bool IsValid() {
@@ -127,16 +130,19 @@ public:
     int* types = new int[properties.size()];
     char** names = new char*[properties.size()];
     char** vals = new char*[properties.size()];
+    char* read_only = new char[properties.size()];
 
     for(int i = 0; i < props_no; i++) {
       types[i] = (int)properties.at(i)._type;
       names[i] = StrToChrA(properties.at(i)._name);
       vals[i] = StrToChrA(properties.at(i)._default_value);
+      read_only[i] = IsPropertyTypeForReadOnly(properties.at(i)._type);
     }
 
-    int res = _register_module(name.c_str(), props_no, types, names, vals, callback);
+    int res = _register_module(name.c_str(), props_no, types, names, vals, read_only, callback);
 
     delete[] types;
+    delete[] read_only;
     for(int i = 0; i < props_no; i++) {
       delete[] names[i];
       delete[] vals[i];
@@ -147,11 +153,11 @@ public:
     return res;
   }
 
-  bool UnregisterModule(int module_id) {
+  void UnregisterModule(int module_id) {
     if(!_is_valid)
-      return false;
+      return;
 
-    return _unregister_module(module_id);
+    _unregister_module(module_id);
   }
 
   void UpdateProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {

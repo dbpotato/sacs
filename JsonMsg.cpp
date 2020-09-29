@@ -113,8 +113,9 @@ std::shared_ptr<Module> JsonMsg::ToModule() {
   for(size_t i = 0; i < properties.size(); ++i) {
     int prop_type = ValueToInt(properties.at(i),"type");
     std::string prop_name = ValueToString(properties.at(i), "name");
-    std::string prop_defualt_value = ValueToString(properties.at(i),"default_value");
-    props_vec.push_back({prop_type, prop_name, prop_defualt_value});
+    std::string prop_value = ValueToString(properties.at(i),"value");
+    bool prop_read_only = (bool)ValueToInt(properties.at(i),"read_only");
+    props_vec.push_back({prop_type, prop_name, prop_value, prop_read_only});
   }
 
   return std::make_shared<Module>(id, name, props_vec, nullptr);
@@ -156,7 +157,8 @@ nlohmann::json JsonMsg::ModuleToJson(std::shared_ptr<Module> module) {
     auto jprop = nlohmann::json::object();
     jprop["type"] = property._type;
     jprop["name"] = property._name;
-    jprop["default_value"] = property._default_value;
+    jprop["value"] = property._value;
+    jprop["read_only"] = (int)property._read_only;
     prop_list.push_back(jprop);
   }
   jmodule["properties"] = prop_list;
@@ -164,7 +166,7 @@ nlohmann::json JsonMsg::ModuleToJson(std::shared_ptr<Module> module) {
 }
 
 void JsonMsg::GetPropertiesList(std::vector<std::pair<int, std::string> >& out_properties) {
-  if(_type != REQ_APPLY)
+  if((_type != REQ_APPLY) && (_type != PROPERTY_UPDATE))
     return;
 
   auto& properties = _json["properties"];

@@ -27,6 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const char* FACTORY_HTML = R"""(
   function createTextProperty(id, prop, module_id, has_bt, is_ro) {
     var res = document.createElement("div");
+    res.setAttribute("class", "horizontal");
     var text = document.createElement("input");
     res.appendChild(text);
 
@@ -34,13 +35,13 @@ const char* FACTORY_HTML = R"""(
 
     text.setAttribute("class", "property_input");
     text.setAttribute("type", "text");
-    text.value = prop.default_value;
+    text.value = prop.value;
 
     if(has_bt) {
       var button = document.createElement("div");
       button.innerHTML = "Send";
       button.addEventListener("click", function(){handlePopertyActivated(module_id, id, text.value)});
-      button.setAttribute("class", "base_bt");
+      button.setAttribute("class", "base_bt send_bt");
       res.appendChild(button);
     }
 
@@ -53,19 +54,20 @@ const char* FACTORY_HTML = R"""(
 
   function createTextAreaProperty(id, prop, module_id, has_bt, is_ro) {
     var res = document.createElement("div");
+    res.setAttribute("class", "horizontal");
     var text_area = document.createElement("textarea");
     res.appendChild(text_area);
 
     prop.html = text_area;
 
     text_area.setAttribute("class", "property_textarea");
-    text_area.innerHTML = prop.default_value;
+    text_area.innerHTML = prop.value;
 
     if(has_bt) {
       var button = document.createElement("div");
       button.innerHTML = "Send";
       button.addEventListener("click", function(){handlePopertyActivated(module_id, id, text_area.innerHTML)});
-      button.setAttribute("class", "base_bt");
+      button.setAttribute("class", "base_bt send_bt");
       res.appendChild(button);
     }
 
@@ -87,10 +89,34 @@ const char* FACTORY_HTML = R"""(
     return button;
   }
 
+  function createSwitchProperty(id, prop, module_id) {
+    var switch_prop = document.createElement("input");
+    prop.html = switch_prop;
+
+    switch_prop.setAttribute("type", "checkbox");
+    if(prop.value == '1') {
+      switch_prop.checked = true;
+    }
+    else {
+      switch_prop.checked = false;
+    }
+
+    switch_prop.addEventListener("click", function() {
+      value = "0";
+      if(switch_prop.checked) {
+        value = "1";
+      }
+      handlePopertyActivated(module_id, id, value);
+    });
+
+    switch_prop.setAttribute("class", "toggle");
+    return switch_prop;
+  }
+
   function createScript(prop, module_id) {
     var holder = document.getElementById("script_holder");
     var js = document.createElement("script");
-    js.text= prop.default_value;
+    js.text= prop.value;
     js.setAttribute("id", "script_" + module_id);
     holder.appendChild(js);
     return window[prop.name + "_init"](module_id);
@@ -104,7 +130,7 @@ const char* FACTORY_HTML = R"""(
     prop_name.setAttribute("class", "property_name");
     prop_div.appendChild(prop_name);
 
-    if(prop.type != BUTTON) {
+    if(prop.type != Property.BUTTON) {
       prop_name.innerHTML = prop.name;
     }
 
@@ -115,27 +141,30 @@ const char* FACTORY_HTML = R"""(
     var prop_elem = null;
 
     switch(prop.type) {
-      case TEXT:
+      case Property.TEXT:
         prop_elem = createTextProperty(id, prop, module_id, false, false);
         break;
-      case TEXT_BT:
+      case Property.TEXT_BT:
         prop_elem = createTextProperty(id, prop, module_id, true, false);
         break;
-      case TEXT_RO:
+      case Property.TEXT_RO:
         prop_elem = createTextProperty(id, prop, module_id, false, true);
         break;
-      case TEXT_AREA:
+      case Property.TEXT_AREA:
         prop_elem = createTextAreaProperty(id, prop, module_id, false, false);
         break;
-      case TEXT_AREA_BT:
+      case Property.TEXT_AREA_BT:
         prop_elem = createTextAreaProperty(id, prop, module_id, true, false);
         break;
-      case TEXT_AREA_RO:
-      case LOG:
+      case Property.TEXT_AREA_RO:
+      case Property.LOG:
         prop_elem = createTextAreaProperty(id, prop, module_id, false, true);
         break;
-      case BUTTON:
+      case Property.BUTTON:
         prop_elem = createButtonProperty(id, prop, module_id);
+        break;
+      case Property.BUTTON_SW:
+        prop_elem = createSwitchProperty(id, prop, module_id);
         break;
       default:
         break;
@@ -180,12 +209,13 @@ const char* FACTORY_HTML = R"""(
     var needs_mod_bt = false;
     for (var i = 0; i < module.properties.length; i++) {
        var prop = module.properties[i];
-       if(prop.type == SCRIPT) {
+       if(prop.type == Property.SCRIPT) {
          mod_prop_list_div.appendChild(createScript(prop, module.id));
          break;
        }
-       if(prop.type == TEXT || prop.type == TEXT_AREA) 
+       if(prop.type == Property.TEXT || prop.type == Property.TEXT_AREA ) { 
          needs_mod_bt = true;
+       }
        mod_prop_list_div.appendChild(createProperty(i, module.properties[i], module.id));
     }
     mod_div.appendChild(mod_prop_list_div);

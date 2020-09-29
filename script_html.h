@@ -26,15 +26,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const char* SCRIPT_HTML = R"""(
   var event_source;
 
-  var BUTTON = 0;
-  var TEXT = 1;
-  var TEXT_BT = 2;
-  var TEXT_RO = 3;
-  var TEXT_AREA = 4;
-  var TEXT_AREA_BT = 5;
-  var TEXT_AREA_RO = 6;
-  var LOG = 7;
-  var SCRIPT = 8;
+  function Enum() {
+    for (var i in arguments) {
+      this[arguments[i]] = parseInt(i);
+    }
+  }
+
+  var Property = new Enum('BUTTON',
+                          'BUTTON_SW',
+                          'TEXT',
+                          'TEXT_BT',
+                          'TEXT_RO',
+                          'TEXT_AREA',
+                          'TEXT_AREA_BT',
+                          'TEXT_AREA_RO',
+                          'LOG',
+                          'SCRIPT');
 
   function dlog(str) {
     document.getElementById("dlog").innerHTML += "<br>" + str;
@@ -54,8 +61,8 @@ const char* SCRIPT_HTML = R"""(
         for (var n = 0; n < document.module_list[i].properties.length; n++) {
           var prop = document.module_list[i].properties[n];
           switch(prop.type) {
-            case TEXT:
-            case TEXT_AREA:
+            case Property.TEXT:
+            case Property.TEXT_AREA:
               req.properties.push({id : n, value : prop.html.value});
               break;
             default:
@@ -100,24 +107,24 @@ const char* SCRIPT_HTML = R"""(
 
   function setPoropertyValue(prop, value) {
     switch(prop.type) {
-      case TEXT:
-      case TEXT_BT:
-      case TEXT_RO:
-      case TEXT_AREA:
-      case TEXT_AREA_BT:
-      case TEXT_AREA_RO:
+      case Property.TEXT:
+      case Property.TEXT_BT:
+      case Property.TEXT_RO:
+      case Property.TEXT_AREA:
+      case Property.TEXT_AREA_BT:
+      case Property.TEXT_AREA_RO:
         prop.html.value = value;
         break;
-      case LOG:
+      case Property.LOG:
         if(value.length > 0) 
           prop.html.value = value + "\n" + prop.html.value;
         else
           prop.html.value = "";
         break;
-      case BUTTON:
+      case Property.BUTTON:
         prop.html.innerHTML = value
         break;
-      case SCRIPT:
+      case Property.SCRIPT:
         window[prop.name + "_update"](value);
         break;
       default:

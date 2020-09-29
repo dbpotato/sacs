@@ -23,7 +23,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Module.h"
 
-
 Module::Module(int id,
                const std::string& name,
                const std::vector<Property>& props,
@@ -34,10 +33,23 @@ Module::Module(int id,
     , _callback(callback) {
 }
 
+void Module::SetPropertyValue(int property_id, const std::string& value) {
+  if(property_id < (int)_properties.size()) {
+    _properties.at(property_id).SetValue(value);
+  }
+}
+
 Module::Property::Property(int type,
                            const std::string& name,
-                           const std::string& defualt_value)
+                           const std::string& defualt_value,
+                           bool  read_only)
     : _type(type)
     , _name(name)
-    , _default_value(defualt_value) {
+    , _value(defualt_value)
+    , _read_only(read_only) {
+}
+
+void Module::Property::SetValue(const std::string& value) {
+  if(!_read_only)
+    _value = value;
 }

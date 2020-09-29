@@ -40,11 +40,10 @@ ModuleManager::ModuleManager(int port, std::shared_ptr<Connection> connection)
     : _port(port)
     , _connection(connection)
     , _id_counter(0)
-    , _initalized(false) {
+    , _initialized(false) {
   if(!_connection)
     _connection = Connection::CreateBasic();
 }
-
 
 void ModuleManager::Init() {
   _proxy = std::make_shared<Proxy>();
@@ -58,9 +57,9 @@ void ModuleManager::OnProxyInitialized(bool host_mode) {
     bool res = _http_server->Init(_connection,  shared_from_this(), _port); //TODO error handle
     log()->info("Created Http Server at port : {} , success : {}", _port, res);
   }
-  _initalized = true;
+  _initialized = true;
 
-  for(auto& msg: _msg_qeue) {
+  for(auto& msg: _msg_queue) {
     if(_http_server) {
       _http_server->PushEventSourceMsg(msg);
     }
@@ -68,12 +67,12 @@ void ModuleManager::OnProxyInitialized(bool host_mode) {
       _proxy->PushEventSourceMsg(msg);
     }
   }
-  _msg_qeue.clear();
+  _msg_queue.clear();
 }
 
 void ModuleManager::HandleMessage(const std::string& msg) {
-  if(!_initalized) {
-    _msg_qeue.push_back(msg);
+  if(!_initialized) {
+    _msg_queue.push_back(msg);
     return;
   }
   else if(_http_server) {
@@ -113,21 +112,40 @@ void ModuleManager::UnregisterModule(int module_id) {
 }
 
 void ModuleManager::UpdateProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {
+  SaveProperties(module_id, properties);
   HandleMessage(JsonMsg::CreatePropertyUpdated(module_id, properties));
 }
 
-void ModuleManager::UpdateProperties(JsonMsg& json) {
+void ModuleManager::UpdateProperties(int module_id, JsonMsg& json) {
+  SaveProperties(module_id, json);
   HandleMessage(json.ToString());
+}
+
+void ModuleManager::SaveProperties(int module_id, JsonMsg& json) {
+  std::vector<std::pair<int, std::string>> properties;
+  json.GetPropertiesList(properties);
+  SaveProperties(module_id, properties);
+}
+
+void ModuleManager::SaveProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {
+  auto it = _modules.find(module_id);
+  std::shared_ptr<Module> module = it->second;
+
+  for(size_t i = 0; i < properties.size(); ++i) {
+    int id = properties.at(i).first;
+    const std::string& value = properties.at(i).second;
+    module->SetPropertyValue(id, value);
+  }
 }
 
 std::string ModuleManager::ProcessXhrRequest(const std::string& str) { 
   JsonMsg json;
   if(!json.Parse(str))
-    return {};
+    return JsonMsg::Empty();
 
   switch(json.GetType()) {
     case JsonMsg::Type::REQ_LOAD:
-      return ListModules();
+      return JsonMsg::CreateModuleList(_modules);
     case JsonMsg::Type::REQ_APPLY:
       PassPropertyUpdateToModule(json);
       break;
@@ -135,10 +153,6 @@ std::string ModuleManager::ProcessXhrRequest(const std::string& str) {
       break;
   }
   return JsonMsg::Empty();
-}
-
-std::string ModuleManager::ListModules() {
-  return JsonMsg::CreateModuleList(_modules);
 }
 
 void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
@@ -149,10 +163,6 @@ void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
     return;
 
   module = it->second;
-  if(!module->_callback) {
-    _proxy->HandlePropertyUpdate(json);
-    return;
-  }
 
   std::vector<std::pair<int, std::string>> properties;
   json.GetPropertiesList(properties);
@@ -160,12 +170,19 @@ void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
   if(!properties.size())
     return;
 
+  SaveProperties(module_id,  properties);
+
+  if(!module->_callback) {
+    _proxy->HandlePropertyUpdate(json);
+    return;
+  }
+
   int* prop_ids = new int[properties.size()];
   char** prop_vals = new char*[properties.size()];
 
   for(size_t i = 0; i < properties.size(); ++i) {
     int id = properties.at(i).first;
-    std::string& value = properties.at(i).second;
+    const std::string& value = properties.at(i).second;
     prop_ids[i] = id;
 
     char* str = nullptr;

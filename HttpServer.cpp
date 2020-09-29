@@ -65,6 +65,16 @@ bool HttpServer::Init(std::shared_ptr<Connection> connection,
   return (_server != nullptr);
 }
 
+void HttpServer::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
+/*
+  if(err == NetError::OK) {
+    if(client->GetIp().compare("31.179.164.26")) {
+      _server->OnClientClosed(client);
+    }
+  }
+*/
+}
+
 void HttpServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
   ProcessRequest(client, msg);
 }
@@ -94,7 +104,7 @@ void HttpServer::ProcessRequest(std::shared_ptr<Client> client, std::shared_ptr<
       break;
     case Request::Type::EVENTS:
       {
-        AddEventListener(client->Handle(), client);
+        AddEventListener(client);
         PrepareEventResponse(client, req);
       }
       break;
@@ -210,9 +220,10 @@ void HttpServer::PrepareErrorResponse(Request& req) {
   std::memcpy(req._data.get(), msg.c_str(), req._size);
 }
 
-void HttpServer::AddEventListener(int id, std::weak_ptr<Client> client) {
+void HttpServer::AddEventListener(std::shared_ptr<Client> client) {
+  DLOG(info, "HttpServer::AddEventListener : {}", client->GetId());
   std::lock_guard<std::mutex> lock(_event_listeners_mutex);
-  _event_listeners.insert(std::make_pair(id, client));
+  _event_listeners.insert(std::make_pair(client->GetId(), client));
 }
 
 void HttpServer::NotifyEventListeners(const std::string& msg) {
@@ -220,10 +231,12 @@ void HttpServer::NotifyEventListeners(const std::string& msg) {
 
   for(auto it = _event_listeners.begin(); it != _event_listeners.end();) {
     if(auto client = it->second.lock()) {
+      DLOG(info, "HttpServer::NotifyEventListeners : {}", client->GetId());
       client->Send(std::make_shared<Message>(msg));
       it++;
     }
     else{
+      DLOG(info, "HttpServer::NotifyEventListeners : remove : {}", it->first);
       it = _event_listeners.erase(it);
     }
   }
