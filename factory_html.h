@@ -123,15 +123,18 @@ const char* FACTORY_HTML = R"""(
   }
 
   function createProperty(id, prop, module_id) {
+
     var prop_div = document.createElement("div");
     prop_div.setAttribute("class", "property");
 
-    var prop_name = document.createElement("div");
-    prop_name.setAttribute("class", "property_name");
-    prop_div.appendChild(prop_name);
+    if(prop.type != Property.SCRIPT) {
+      var prop_name = document.createElement("div");
+      prop_name.setAttribute("class", "property_name");
+      prop_div.appendChild(prop_name);
 
-    if(prop.type != Property.BUTTON) {
-      prop_name.innerHTML = prop.name;
+      if(prop.type != Property.BUTTON) {
+        prop_name.innerHTML = prop.name;
+      }
     }
 
     var prop_value = document.createElement("div");
@@ -165,6 +168,9 @@ const char* FACTORY_HTML = R"""(
         break;
       case Property.BUTTON_SW:
         prop_elem = createSwitchProperty(id, prop, module_id);
+        break;
+      case Property.SCRIPT:
+        prop_elem = createScript(prop, module_id);
         break;
       default:
         break;
@@ -209,10 +215,6 @@ const char* FACTORY_HTML = R"""(
     var needs_mod_bt = false;
     for (var i = 0; i < module.properties.length; i++) {
        var prop = module.properties[i];
-       if(prop.type == Property.SCRIPT) {
-         mod_prop_list_div.appendChild(createScript(prop, module.id));
-         break;
-       }
        if(prop.type == Property.TEXT || prop.type == Property.TEXT_AREA ) { 
          needs_mod_bt = true;
        }

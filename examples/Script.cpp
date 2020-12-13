@@ -34,7 +34,7 @@ std::string script = R"""(function script_test_init(module_id){
                             img.width = 400;
                             img.height = 400;
                             img.addEventListener("click", function(){
-                              var props = [{id: 0, value : "A"}, {id : 1, value : "B"}];
+                              var props = [{id: 1, value : "1"}];
                               handlePopertiesActivated(module_id, props);
                             });
                             return img;
@@ -54,6 +54,7 @@ void callback(int module_id, int count, const int* property_no, const char* cons
 
   std::vector<std::pair<int, std::string> > properties;
   properties.emplace_back(0, str_stream.str());
+  properties.emplace_back(1, str_stream.str());
   SacsWrapper::Instance().UpdateProperties(module_id, properties);
 }
 
@@ -62,6 +63,7 @@ int main() {
  /* Register Module with two text fileds and callback
   */
   std::vector<ModuleProperty> properties;
+  properties.emplace_back(ModuleProperty::Type::TEXT_RO, "Current Size", "400 400");
   properties.emplace_back(ModuleProperty::Type::SCRIPT, "script_test", script);
   SacsWrapper::Instance().RegisterModule("Script", properties, callback);
 
