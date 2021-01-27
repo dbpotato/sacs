@@ -53,7 +53,7 @@ public:
             std::shared_ptr<ModuleManager> module_mgr,
             int port);
 
-  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
+  bool OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
   bool IsRaw() override;
 

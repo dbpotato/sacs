@@ -53,7 +53,7 @@ public :
   /**
    * Implements ClientManager interface
    */
-  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
+  bool OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
 
   /**
    * Implements ClientManager interface

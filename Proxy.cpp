@@ -45,9 +45,9 @@ void Proxy::Init(std::shared_ptr<Connection> connection,
   _connection->CreateClient(_port, "127.0.0.1", shared_from_this());
 }
 
-void Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
+bool Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
   if(_initialized)
-    return;
+    return (err == NetError::OK);
 
   _initialized = true;
 
@@ -60,6 +60,8 @@ void Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
     _server->Init(_connection, _module_mgr, _port);
   }
   _module_mgr->OnProxyInitialized(_server != nullptr);
+
+  return (err == NetError::OK);
 }
 
 void Proxy::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {

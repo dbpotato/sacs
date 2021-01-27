@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2021 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -74,6 +74,7 @@ include_directories(
 
 set(COMMON
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
+  ${COMMON_DIR}/tools/thread/ThreadLoop.cpp
   ${COMMON_DIR}/tools/net/SocketContext.cpp
   ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
