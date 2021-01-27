@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2021 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -61,12 +61,12 @@ const char* FACTORY_HTML = R"""(
     prop.html = text_area;
 
     text_area.setAttribute("class", "property_textarea");
-    text_area.innerHTML = prop.value;
+    text_area.value = prop.value;
 
     if(has_bt) {
       var button = document.createElement("div");
       button.innerHTML = "Send";
-      button.addEventListener("click", function(){handlePopertyActivated(module_id, id, text_area.innerHTML)});
+      button.addEventListener("click", function(){handlePopertyActivated(module_id, id, text_area.value)});
       button.setAttribute("class", "base_bt send_bt");
       res.appendChild(button);
     }
