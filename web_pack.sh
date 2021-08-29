@@ -1,14 +1,17 @@
 #!/bin/bash
 
-cp WebAppDataTemplate.cpp WebAppData.cpp
+SCRIPT_DIR=$(dirname "$0")
+echo "Source: $SCRIPT_DIR"
 
-for filename in ./webapp/*; do
+cp $SCRIPT_DIR/WebAppDataTemplate.cpp $SCRIPT_DIR/WebAppData.cpp
+
+for filename in $SCRIPT_DIR/webapp/*; do
     if [ -f "$filename" ]; then
         base=$(basename $filename);
-        echo "_resources[\"$base\"] =  R\"\"\"(" >> WebAppData.cpp;
-        cat "$filename" >> WebAppData.cpp;
-        echo -e ")\"\"\";\n" >> WebAppData.cpp;
+        echo "_resources[\"$base\"] =  R\"\"\"(" >> $SCRIPT_DIR/WebAppData.cpp;
+        cat "$filename" >> $SCRIPT_DIR/WebAppData.cpp;
+        echo -e ")\"\"\";\n" >> $SCRIPT_DIR/WebAppData.cpp;
     fi
 done
 
-echo -e "\n};\n" >> WebAppData.cpp
+echo -e "\n};\n" >> $SCRIPT_DIR/WebAppData.cpp
