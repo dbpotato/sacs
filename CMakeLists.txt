@@ -24,6 +24,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 cmake_minimum_required(VERSION 3.2)
 project(Sacs)
 
+
 set(CXX_FLAGS
  "-O2 \
  -std=gnu++11 \
@@ -37,8 +38,8 @@ set(CXX_FLAGS
 )
 
 set(LD_FLAGS
- "-lpthread \
-  -ldl"
+  "-lpthread \
+   -ldl"
 )
 
 #add_definitions(-DENABLE_DEBUG_LOGGER)
@@ -64,13 +65,19 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPI
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
 
 
+add_custom_command(
+  OUTPUT  WebAppData.cpp
+  COMMAND ${SRC_DIR}/web_pack.sh
+)
+
 include_directories(
   "${SRC_DIR}/wrappers"
   "${SRC_DIR}/json/include"
   "${COMMON_DIR}/third_party/spdlog/include"
   "${COMMON_DIR}/tools/thread"
   "${COMMON_DIR}/tools/logger"
-  "${COMMON_DIR}/tools/net")
+  "${COMMON_DIR}/tools/net"
+  "${COMMON_DIR}/tools/net/http")
 
 set(COMMON
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
@@ -85,6 +92,9 @@ set(COMMON
   ${COMMON_DIR}/tools/net/Message.cpp
   ${COMMON_DIR}/tools/net/MessageBuilder.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
+  ${COMMON_DIR}/tools/net/http/HttpServer.cpp
+  ${COMMON_DIR}/tools/net/http/MessageBuilderHttp.cpp
+  ${COMMON_DIR}/tools/net/http/MimeTypeFinder.cpp
 )
 
 set(SACS
@@ -94,12 +104,13 @@ set(SACS
   ${SRC_DIR}/ModuleManager.cpp
   ${SRC_DIR}/Proxy.cpp
   ${SRC_DIR}/ProxyServer.cpp
-  ${SRC_DIR}/HttpServer.cpp
+  ${SRC_DIR}/HttpServerImpl.cpp
+  ${SRC_DIR}/WebAppData.cpp
   ${SRC_DIR}/SacsLib.cpp
 )
 
 add_library(sacs SHARED ${SACS})
-target_link_libraries(sacs pthread)
+target_link_libraries(sacs ${LD_FLAGS})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER}/examples)
 

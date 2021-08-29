@@ -32,7 +32,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 class Proxy;
-class HttpServer;
+class HttpServerImpl;
 class Connection;
 class Module;
 
@@ -56,8 +56,9 @@ public:
   void OnProxyInitialized(bool host_mode);
 
   /**
-  * Called form Proxy
-  * \param host_mode if true - this is an only instance on specified port and http server should be created.
+  * Prepare response for webui request
+  * \param str request in json format
+  * \return response in json format
   */
   std::string ProcessXhrRequest(const std::string& str);
 
@@ -142,7 +143,7 @@ private:
 
   int _port; ///< listening port for HttpServer
   std::shared_ptr<Connection> _connection; ///< used by Proxy and HttpServer
-  std::shared_ptr<HttpServer> _http_server; ///< null if this works as proxy
+  std::shared_ptr<HttpServerImpl> _http_server; ///< null if this works as proxy
   std::shared_ptr<Proxy> _proxy; ///< used for communicating with other Sacs instances
 
   std::map<int, std::shared_ptr<Module> > _modules; ///< registered modules

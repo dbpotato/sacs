@@ -23,7 +23,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "ModuleManager.h"
 #include "Connection.h"
-#include "HttpServer.h"
+#include "HttpServerImpl.h"
 #include "Proxy.h"
 #include "Logger.h"
 
@@ -53,7 +53,7 @@ void ModuleManager::Init() {
 void ModuleManager::OnProxyInitialized(bool host_mode) {
   log()->info("Host Mode : {}", host_mode); 
   if(host_mode) {
-    _http_server = std::make_shared<HttpServer>();
+    _http_server = std::make_shared<HttpServerImpl>();
     bool res = _http_server->Init(_connection,  shared_from_this(), _port); //TODO error handle
     log()->info("Created Http Server at port : {} , success : {}", _port, res);
   }
