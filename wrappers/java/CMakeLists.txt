@@ -47,7 +47,7 @@ set(CXX_FLAGS
 add_definitions(-D__ANDROID__)
 
 #Set patch to ndk here
-#set(NDK "PATH TO NDK DIR")
+set(NDK "/home/adam/Android/Sdk/ndk/21.0.6113669/")
 if(NOT DEFINED NDK)
   message(FATAL_ERROR "Edit CMakeLists.txt and set patch to ndk in line : 50")
 endif()

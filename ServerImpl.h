@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 - 2021 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -24,7 +24,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include "WebAppData.h"
-#include "HttpServer.h"
+#include "WebsocketServer.h"
 
 #include <memory>
 #include <vector>
@@ -33,28 +33,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 class ModuleManager;
 
 
-class HttpServerImpl : public HttpRequestHandler
-                     , public std::enable_shared_from_this<HttpServerImpl>  {
+class ServerImpl : public HttpRequestHandler
+                 , public WebsocketClientListener {
 
 public:
-  bool Init(std::shared_ptr<Connection> connection,
-            std::shared_ptr<ModuleManager> module_mgr,
-            int port);
+  ServerImpl(std::weak_ptr<ModuleManager> module_mgr);
 
-  void PushEventSourceMsg(const std::string& msg);
+  void PushMsgForJS(const std::string& msg);
 
-  void GetResource(HttpRequest& request) override;
+  void Handle(HttpRequest& request) override;
+  bool OnWsClientConnected(std::shared_ptr<Client> client, const std::string& request_arg) override;
+  void OnWsClientMessage(std::shared_ptr<Client> client, std::shared_ptr<WebsocketMessage> message) override;
+  void OnWsClientClosed(std::shared_ptr<Client> client) override;
 
 private:
-  void PerpareFileResponse(HttpRequest& request);
-  void PrepareEventResponse(HttpRequest& request);
-  void PrepareXhrResponse(HttpRequest& request);
-
+  void PerpareHTTPGetResponse(HttpRequest& request);
   void AddEventListener(std::weak_ptr<Client> client);
-  void NotifyEventListeners(const std::string& msg);
 
-  std::shared_ptr<HttpServer> _server;
-  std::shared_ptr<ModuleManager> _module_mgr;
+  std::weak_ptr<ModuleManager> _module_mgr;
   std::vector<std::weak_ptr<Client>> _event_listeners;
   std::mutex _event_listeners_mutex;
   WebAppData _web_data;

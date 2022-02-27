@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2020 - 2021 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -71,15 +71,22 @@ add_custom_command(
 )
 
 include_directories(
-  "${SRC_DIR}/wrappers"
-  "${SRC_DIR}/json/include"
-  "${COMMON_DIR}/third_party/spdlog/include"
-  "${COMMON_DIR}/tools/thread"
-  "${COMMON_DIR}/tools/logger"
-  "${COMMON_DIR}/tools/net"
-  "${COMMON_DIR}/tools/net/http")
+  ${SRC_DIR}/wrappers
+  ${SRC_DIR}/json/include
+  ${COMMON_DIR}/third_party/digestpp/algorithm
+  ${COMMON_DIR}/third_party/cpp-base64
+  ${COMMON_DIR}/third_party/spdlog/include
+  ${COMMON_DIR}/tools/thread
+  ${COMMON_DIR}/tools/logger
+  ${COMMON_DIR}/tools/net
+  ${COMMON_DIR}/tools/net/http
+  ${COMMON_DIR}/tools/net/http/websocket/server
+  ${COMMON_DIR}/tools/net/http/websocket/common
+  ${COMMON_DIR}/tools/utils
+)
 
 set(COMMON
+  ${COMMON_DIR}/third_party/cpp-base64/base64.cpp
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
   ${COMMON_DIR}/tools/thread/ThreadLoop.cpp
   ${COMMON_DIR}/tools/net/SocketContext.cpp
@@ -92,9 +99,16 @@ set(COMMON
   ${COMMON_DIR}/tools/net/Message.cpp
   ${COMMON_DIR}/tools/net/MessageBuilder.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
+  ${COMMON_DIR}/tools/net/http/HttpHeader.cpp
+  ${COMMON_DIR}/tools/net/http/HttpMessage.cpp
   ${COMMON_DIR}/tools/net/http/HttpServer.cpp
   ${COMMON_DIR}/tools/net/http/MessageBuilderHttp.cpp
   ${COMMON_DIR}/tools/net/http/MimeTypeFinder.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/server/WebsocketServer.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketHeader.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketMessage.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketMessageBuilder.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketFragmentBuilder.cpp
 )
 
 set(SACS
@@ -104,7 +118,7 @@ set(SACS
   ${SRC_DIR}/ModuleManager.cpp
   ${SRC_DIR}/Proxy.cpp
   ${SRC_DIR}/ProxyServer.cpp
-  ${SRC_DIR}/HttpServerImpl.cpp
+  ${SRC_DIR}/ServerImpl.cpp
   ${SRC_DIR}/WebAppData.cpp
   ${SRC_DIR}/SacsLib.cpp
 )

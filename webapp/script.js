@@ -1,4 +1,5 @@
 var event_source;
+var websocket_obj;
 
 function Enum() {
   for (var i in arguments) {
@@ -43,7 +44,7 @@ function applyModuleChanges(module_id) {
             break;
         }
       }
-      send_xhr(JSON.stringify(req));
+      send_req(JSON.stringify(req));
       break;
     }
   }
@@ -51,12 +52,12 @@ function applyModuleChanges(module_id) {
 
 function handlePopertyActivated(module_id, property_id, val) {
   var req = {type: "apply", id: module_id, properties: [{ id : property_id, value : val}]};
-  send_xhr(JSON.stringify(req));
+  send_req(JSON.stringify(req));
 }
 
 function handlePopertiesActivated(module_id, props) {
   var req = {type: "apply", id: module_id, properties: props};
-  send_xhr(JSON.stringify(req));
+  send_req(JSON.stringify(req));
 }
 
 function selectModule(module) {
@@ -135,11 +136,7 @@ function handleServerEvent(e) {
   else if(json.type == "module_removed") {
     deleteModule(json.id);
   }
-}
-
-function handleXhrResponse(str) {
-  var json = JSON.parse(str);
-  if(json.type == "module_list") {
+  else if(json.type == "module_list") {
     addModuleList(json.modules);
   }
 }
@@ -194,19 +191,26 @@ function create_se() {
   };
 }
 
+function create_ws() {
+  var currentUrl = new URL(window.location.href);
+  websocket_obj = new WebSocket("ws://" + currentUrl.host);
+  websocket_obj.onopen = onWsCreated;
+  websocket_obj.onmessage = handleServerEvent;
+  websocket_obj.error = function(e) {
+    websocket_obj.close();
+  }
+  websocket_obj.onclose = showConnectionInfoErr;
+};
+
 function init() {
-  create_se();
-  send_xhr('{"type": "load"}');
+  create_ws();
 }
 
-function send_xhr(str) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200 && xhttp.responseText.length != 0) {
-      handleXhrResponse(xhttp.responseText);
-    }
-  };
-  xhttp.open("POST", "xhr");
-  xhttp.send(str);
+function onWsCreated() {
+  send_req('{"type": "load"}');
+}
+
+function send_req(str) {
+  websocket_obj.send(str);
 }
 

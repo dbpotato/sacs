@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -55,7 +55,7 @@ bool Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
     _client = client;
   }
   else {
-    log()->info("CreateServer {}", _port);
+    log()->info("Create Proxy Server at port : {}", _port);
     _server = std::make_shared<ProxyServer>();
     _server->Init(_connection, _module_mgr, _port);
   }
@@ -70,7 +70,7 @@ void Proxy::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message
   _module_mgr->PassPropertyUpdateToModule(json);
 }
 
-void Proxy::PushEventSourceMsg(const std::string& msg) {
+void Proxy::PushMsgForJS(const std::string& msg) {
   _client->Send(std::make_shared<Message>(0, msg));
 }
 

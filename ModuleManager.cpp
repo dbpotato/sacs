@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -23,9 +23,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "ModuleManager.h"
 #include "Connection.h"
-#include "HttpServerImpl.h"
+#include "ServerImpl.h"
 #include "Proxy.h"
 #include "Logger.h"
+#include "WebsocketServer.h"
 
 #include <sstream>
 
@@ -51,20 +52,23 @@ void ModuleManager::Init() {
 }
 
 void ModuleManager::OnProxyInitialized(bool host_mode) {
-  log()->info("Host Mode : {}", host_mode); 
+  log()->info("Running in Host Mode : {}", host_mode); 
   if(host_mode) {
-    _http_server = std::make_shared<HttpServerImpl>();
-    bool res = _http_server->Init(_connection,  shared_from_this(), _port); //TODO error handle
+    _ws_server = std::make_shared<WebsocketServer>();
+    _server_impl = std::make_shared<ServerImpl>(shared_from_this());
+
+    bool res = _ws_server->Init(_connection, _server_impl, _server_impl, _port); //TODO error handle
     log()->info("Created Http Server at port : {} , success : {}", _port, res);
   }
+
   _initialized = true;
 
   for(auto& msg: _msg_queue) {
-    if(_http_server) {
-      _http_server->PushEventSourceMsg(msg);
+    if(_server_impl) {
+      _server_impl->PushMsgForJS(msg);
     }
     else {
-      _proxy->PushEventSourceMsg(msg);
+      _proxy->PushMsgForJS(msg);
     }
   }
   _msg_queue.clear();
@@ -75,11 +79,11 @@ void ModuleManager::HandleMessage(const std::string& msg) {
     _msg_queue.push_back(msg);
     return;
   }
-  else if(_http_server) {
-    _http_server->PushEventSourceMsg(msg);
+  else if(_server_impl) {
+    _server_impl->PushMsgForJS(msg);
   }
   else {
-    _proxy->PushEventSourceMsg(msg);
+    _proxy->PushMsgForJS(msg);
   }
 }
 
@@ -138,7 +142,7 @@ void ModuleManager::SaveProperties(int module_id, const std::vector<std::pair<in
   }
 }
 
-std::string ModuleManager::ProcessXhrRequest(const std::string& str) { 
+std::string ModuleManager::ProcessJSRequest(const std::string& str) { 
   JsonMsg json;
   if(!json.Parse(str))
     return JsonMsg::Empty();

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -69,7 +69,7 @@ public :
    * Send message to proxy server in another SACS instance
    * \param msg string to send
    */
-  void PushEventSourceMsg(const std::string& msg);
+  void PushMsgForJS(const std::string& msg);
 
   /**
    * Pass message with propery update to local ProxyServer

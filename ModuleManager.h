@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -32,9 +32,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 class Proxy;
-class HttpServerImpl;
+class ServerImpl;
 class Connection;
 class Module;
+class WebsocketServer;
 
 /**
  * Magic happens here. This is the main class of the project.
@@ -60,7 +61,7 @@ public:
   * \param str request in json format
   * \return response in json format
   */
-  std::string ProcessXhrRequest(const std::string& str);
+  std::string ProcessJSRequest(const std::string& str);
 
   /**
   * Create a new module. Called by SacsLib.cpp
@@ -143,7 +144,8 @@ private:
 
   int _port; ///< listening port for HttpServer
   std::shared_ptr<Connection> _connection; ///< used by Proxy and HttpServer
-  std::shared_ptr<HttpServerImpl> _http_server; ///< null if this works as proxy
+  std::shared_ptr<ServerImpl> _server_impl; ///< null if this works as proxy
+  std::shared_ptr<WebsocketServer> _ws_server; ///< null if this works as proxy
   std::shared_ptr<Proxy> _proxy; ///< used for communicating with other Sacs instances
 
   std::map<int, std::shared_ptr<Module> > _modules; ///< registered modules
