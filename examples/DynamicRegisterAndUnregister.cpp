@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -24,26 +24,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <unistd.h>
 #include "SacsWrapper.h"
 
+
 int g_tmp_mod_id = -1;
 
 void callback(int module_id, int count, const int* property_no, const char* const* property_val) {
   if(count == 1 ) { // sanity check
 
     if(!(*property_no)) {
-      if(g_tmp_mod_id != -1)
+      if(g_tmp_mod_id != -1) {
         return;
+      }
 
       std::vector<ModuleProperty> properties;
-      properties.emplace_back(ModuleProperty::Type::TEXT_AREA_BT, "Info", "Hello World");
+      properties.emplace_back(ModuleProperty::Type::TEXT_AREA_RO, "Just a simple", "Hello World");
       g_tmp_mod_id = SacsWrapper::Instance().RegisterModule("Temporary Module", properties, nullptr);
-     }
-     else{
-       if(g_tmp_mod_id == -1)
-         return;
+    } else {
+      if(g_tmp_mod_id == -1) {
+        return;
+      }
 
-       SacsWrapper::Instance().UnregisterModule(g_tmp_mod_id);
-       g_tmp_mod_id = -1;
-     }
+      SacsWrapper::Instance().UnregisterModule(g_tmp_mod_id);
+      g_tmp_mod_id = -1;
+    }
   }
 }
 

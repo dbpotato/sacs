@@ -24,6 +24,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "ServerImpl.h"
 #include "Message.h"
+#include "MimeTypeFinder.h"
 #include "WebsocketMessage.h"
 #include "ModuleManager.h"
 #include "HttpHeader.h"
@@ -63,6 +64,7 @@ void ServerImpl::OnWsClientMessage(std::shared_ptr<Client> client, std::shared_p
 }
 
 void ServerImpl::OnWsClientClosed(std::shared_ptr<Client> client) {
+  RemoveEventListener(client);
 }
 
 void ServerImpl::PushMsgForJS(const std::string& msg) {
@@ -70,7 +72,7 @@ void ServerImpl::PushMsgForJS(const std::string& msg) {
 
   for(auto it = _event_listeners.begin(); it != _event_listeners.end();) {
     auto msg_obj = (std::make_shared<WebsocketMessage>(msg))->ConvertToBaseMessage();
-    if(auto client = it->lock()) {
+    if(auto client = it->second.lock()) {
       client->Send(msg_obj);
       it++;
     }
@@ -94,10 +96,16 @@ void ServerImpl::PerpareHTTPGetResponse(HttpRequest& request) {
     request._response_msg = std::make_shared<HttpMessage>(404);
     return;
   }
-  request._response_msg = request._response_msg = std::make_shared<HttpMessage>(200, body);
+  request._response_msg = std::make_shared<HttpMessage>(200, body);
+  request._response_msg->GetHeader()->AddField(HttpHeaderField::CONTENT_TYPE, MimeTypeFinder::Find(name));
 }
 
-void ServerImpl::AddEventListener(std::weak_ptr<Client> client) {
+void ServerImpl::AddEventListener(std::shared_ptr<Client> client) {
   std::lock_guard<std::mutex> lock(_event_listeners_mutex);
-  _event_listeners.push_back(client);
+  _event_listeners.insert(std::make_pair(client->GetId(), client));
+}
+
+void ServerImpl::RemoveEventListener(std::shared_ptr<Client> client) {
+  std::lock_guard<std::mutex> lock(_event_listeners_mutex);
+  _event_listeners.erase(client->GetId());
 }

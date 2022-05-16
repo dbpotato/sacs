@@ -16,7 +16,7 @@ body {
   display: hidden;
 }
 
-#top_bar {
+#ModuleSelector {
   background-color: #eeeeee;
   border-radius: 8px;
   width : 90%;
@@ -33,10 +33,14 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0;
+  margin-top: 40px;
 }
 
-#reconnect_info {
+#ReconnectInfo {
+  width : 100%;
+  height: 100%;
+  position:absolute;
+  display: flex;
   flex-direction : column;
   justify-content: center;
   align-items: center;
@@ -70,7 +74,7 @@ body {
 
 .send_bt {
   border-radius: 5px;
-  margin-left: 4px;
+  margin-top: 4px;
   height : 22px;
   width : 30px;
   font-size: 14px;
@@ -98,7 +102,14 @@ body {
 
 .horizontal {
   display: flex;
-  flex-direction : row;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .apply_bt {
@@ -118,13 +129,22 @@ body {
   flex-direction : row;
   margin-bottom : 25px;
 }
-.property_name {
+
+.property_name_container {
   width : 20%;
+  margin-right: 20px;
 }
+
+.property_name {
+  margin-right: 20px;
+}
+
 .property_val {
   width : 80%;
-  margin-left : 10px;
+  display: flex;
+  justify-content: center;
 }
+
 .property_apply {
   display: flex;
   justify-content: center;
@@ -133,6 +153,7 @@ body {
 }
 .property_input {
   height: 23px;
+  width: 200px;
   background-color : white;
 }
 .property_textarea {

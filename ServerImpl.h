@@ -27,7 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "WebsocketServer.h"
 
 #include <memory>
-#include <vector>
+#include <map>
 
 
 class ModuleManager;
@@ -48,10 +48,11 @@ public:
 
 private:
   void PerpareHTTPGetResponse(HttpRequest& request);
-  void AddEventListener(std::weak_ptr<Client> client);
+  void AddEventListener(std::shared_ptr<Client> client);
+  void RemoveEventListener(std::shared_ptr<Client> client);
 
   std::weak_ptr<ModuleManager> _module_mgr;
-  std::vector<std::weak_ptr<Client>> _event_listeners;
+  std::map<uint32_t, std::weak_ptr<Client>> _event_listeners;
   std::mutex _event_listeners_mutex;
   WebAppData _web_data;
 };

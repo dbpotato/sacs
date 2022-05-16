@@ -27,25 +27,32 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "SacsWrapper.h"
 
-std::string script = R"""(function script_test_init(module_id){
-                            img = document.createElement('img');
-                            img.src='https://icons-for-free.com/iconfiles/png/512/mario+mario+bros+mario+world+mushroom+toad+videogame+icon-1320196400529338074.png';
-                            img.setAttribute("id", "script_test_img");
-                            img.width = 400;
-                            img.height = 400;
-                            img.addEventListener("click", function(){
-                              var props = [{id: 1, value : "1"}];
-                              handlePopertiesActivated(module_id, props);
-                            });
-                            return img;
-                          }
-                          function script_test_update(properies) {
-                            var vals = properies.split(' ');
-                            img = document.getElementById("script_test_img");
-                            img.width = parseInt(vals[0]);
-                            img.height = parseInt(vals[1]);
-                          }
-                          )""";
+std::string script = R"""(
+  class ScriptTest {
+    constructor(propertyObj) {
+      this.img = document.createElement('img');
+      this.img.src='https://icons-for-free.com/iconfiles/png/512/mario+mario+bros+mario+world+mushroom+toad+videogame+icon-1320196400529338074.png';
+      this.img.width = 400;
+      this.img.height = 400;
+      this.img.addEventListener("click", function(){
+        propertyObj.onActivated();
+      });
+      propertyObj.addObj(this.img);
+    }
+
+    getValue() {
+      return "1";
+    }
+
+    setValue(value) {
+      let vals = value.split(' ');
+      this.img.width = parseInt(vals[0]);
+      this.img.height = parseInt(vals[1]);
+    }
+  }
+
+  return new ScriptTest(propertyObj);
+)""";
 
 void callback(int module_id, int count, const int* property_no, const char* const* property_val) {
 
@@ -64,7 +71,7 @@ int main() {
   */
   std::vector<ModuleProperty> properties;
   properties.emplace_back(ModuleProperty::Type::TEXT_RO, "Current Size", "400 400");
-  properties.emplace_back(ModuleProperty::Type::SCRIPT, "script_test", script);
+  properties.emplace_back(ModuleProperty::Type::SCRIPT, "", script);
   SacsWrapper::Instance().RegisterModule("Script", properties, callback);
 
   while(true)
