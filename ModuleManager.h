@@ -25,10 +25,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "JsonMsg.h"
 
-#include <memory>
-#include <vector>
-#include <map>
 #include <atomic>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 
 class Proxy;
@@ -142,6 +143,24 @@ private:
    */
   void HandleMessage(const std::string& msg);
 
+  /**
+   * Adds new module to _modules collection
+   * \param module module to add
+   */
+  void AddModule(std::shared_ptr<Module> module);
+  /**
+   * Removes module from _modules collection
+   * \param module_id id of module
+   */
+  void RemoveModule(int module_id);
+
+  /**
+   * Returns module from _modules collection
+   * \param module_id id of module
+   * \return module shared pointer. Can be empty.
+   */
+  std::shared_ptr<Module> GetModuleById(int module_id);
+
   int _port; ///< listening port for HttpServer
   std::shared_ptr<Connection> _connection; ///< used by Proxy and HttpServer
   std::shared_ptr<ServerImpl> _server_impl; ///< null if this works as proxy
@@ -153,4 +172,5 @@ private:
 
   int _id_counter; ///< used for creating next module's id
   std::atomic_bool _initialized; ///< false before Proxy is initialized
+  std::mutex _mutex; ///< used to sync access to _modules
 };

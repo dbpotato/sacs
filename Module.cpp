@@ -33,6 +33,16 @@ Module::Module(int id,
     , _callback(callback) {
 }
 
+Module::Module(const std::string& name,
+               const std::vector<Property>& props,
+               void(*callback)(int, int, const int*, const char* const*))
+    : Module(-1, name, props, callback) {
+}
+
+void Module::SetId(int id) {
+  _id = id;
+}
+
 void Module::SetPropertyValue(int property_id, const std::string& value) {
   if(property_id < (int)_properties.size()) {
     _properties.at(property_id).SetValue(value);

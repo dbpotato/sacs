@@ -46,6 +46,10 @@ public:
          const std::string& name,
          const std::vector<Property>& props,
          void(*callback)(int, int, const int*, const char* const*));
+  Module(const std::string& name,
+         const std::vector<Property>& props,
+         void(*callback)(int, int, const int*, const char* const*));
+  void SetId(int id);
   void SetPropertyValue(int property_id, const std::string& value);
   int _id;
   std::string _name;

@@ -90,28 +90,18 @@ void ModuleManager::HandleMessage(const std::string& msg) {
 int ModuleManager::RegisterModule(const std::string& name,
                                   const std::vector<Module::Property>& properties,
                                   void(callback)(int, int, const int*, const char* const*)) {
-  int mod_id = _id_counter++;
-  auto module = std::make_shared<Module>(mod_id, name, properties, callback);
-  _modules.insert(std::make_pair(mod_id, module));
-
-  HandleMessage(JsonMsg::CreateModuleAdded(module));
-
-  return mod_id;
+  auto module = std::make_shared<Module>(name, properties, callback);
+  return RegisterModule(module);
 }
 
 int ModuleManager::RegisterModule(std::shared_ptr<Module> module) {
-  int mod_id = _id_counter++;
-
-  module->_id = mod_id;
-  _modules.insert(std::make_pair(mod_id, module));
-
+  AddModule(module);
   HandleMessage(JsonMsg::CreateModuleAdded(module));
-
-  return mod_id;
+  return module->_id;
 }
 
 void ModuleManager::UnregisterModule(int module_id) {
-  _modules.erase(module_id);
+  RemoveModule(module_id);
   HandleMessage(JsonMsg::CreateModuleRemoved(module_id));
 }
 
@@ -132,8 +122,7 @@ void ModuleManager::SaveProperties(int module_id, JsonMsg& json) {
 }
 
 void ModuleManager::SaveProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {
-  auto it = _modules.find(module_id);
-  std::shared_ptr<Module> module = it->second;
+  auto module = GetModuleById(module_id);
 
   for(size_t i = 0; i < properties.size(); ++i) {
     int id = properties.at(i).first;
@@ -161,12 +150,7 @@ std::string ModuleManager::ProcessJSRequest(const std::string& str) {
 
 void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
   int module_id = json.FindId();
-  std::shared_ptr<Module> module;
-  auto it = _modules.find(module_id);
-  if(it == _modules.end())
-    return;
-
-  module = it->second;
+  auto module = GetModuleById(module_id);
 
   std::vector<std::pair<int, std::string>> properties;
   json.GetPropertiesList(properties);
@@ -209,4 +193,27 @@ void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
     delete[] prop_vals[i];
   }
   delete[] prop_vals;
+}
+
+
+void ModuleManager::RemoveModule(int module_id) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  _modules.erase(module_id);
+}
+
+void ModuleManager::AddModule(std::shared_ptr<Module> module) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  int mod_id = _id_counter++;
+  module->SetId(mod_id);
+  _modules.insert(std::make_pair(mod_id, module));
+}
+
+std::shared_ptr<Module> ModuleManager::GetModuleById(int module_id) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  std::shared_ptr<Module> module;
+  auto it = _modules.find(module_id);
+  if(it != _modules.end()) {
+    module = it->second;
+  }
+  return module;
 }
