@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020 Adam Kaniewski
+Copyright (c) 2020 - 2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -130,6 +130,10 @@ void JniGlue::CallJavaPropertiesUpdate(JNIEnv* env) {
 }
 
 void JniGlue::JniPropsToVec(JNIEnv* env, jobjectArray& jni_array, std::vector<ModuleProperty>& out_vec) {
+  if(!jni_array) {
+    return;
+  }
+
   jsize props_len = env->GetArrayLength(jni_array);
 
   for(jsize i = 0; i < props_len; ++i ) {

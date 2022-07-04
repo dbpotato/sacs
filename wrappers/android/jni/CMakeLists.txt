@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2021 Adam Kaniewski
+Copyright (c) 2021-2022 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -46,21 +46,15 @@ set(CXX_FLAGS
 
 add_definitions(-D__ANDROID__)
 
-#Set patch to ndk here
-set(NDK "/home/adam/Android/Sdk/ndk/21.0.6113669/")
-if(NOT DEFINED NDK)
-  message(FATAL_ERROR "Edit CMakeLists.txt and set patch to ndk in line : 50")
-endif()
-
-set(AINCL "${NDK}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include")
-set(ALIBS_DIR "${NDK}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib")
+set(AINCL "$ENV{ANDROID_NDK_ROOT}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include")
+set(ALIBS_DIR "$ENV{ANDROID_NDK_ROOT}toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib")
 set(DEFAULT_CXX "armv7a-linux-androideabi24-clang++")
-set(CMAKE_CXX_COMPILER "${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/${DEFAULT_CXX}")
+set(CMAKE_CXX_COMPILER "$ENV{ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin/${DEFAULT_CXX}")
 
-set(SRC_DIR "${PROJECT_SOURCE_DIR}/jni")
-set(COMMON_DIR "${PROJECT_SOURCE_DIR}/../../common")
-set(SACS_DIR "${PROJECT_SOURCE_DIR}/../../")
-set(WRAPPERS_DIR "${PROJECT_SOURCE_DIR}/..")
+set(SRC_DIR "${PROJECT_SOURCE_DIR}/src")
+set(COMMON_DIR "${PROJECT_SOURCE_DIR}/../../../common")
+set(SACS_DIR "${PROJECT_SOURCE_DIR}/../../..")
+set(WRAPPERS_DIR "${PROJECT_SOURCE_DIR}/../..")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
@@ -72,19 +66,25 @@ add_custom_command(
 )
 
 include_directories(
-  "${AINCL}"
-  "${SRC_DIR}"
-  "${SACS_DIR}"
-  "${WRAPPERS_DIR}"
-  "${SACS_DIR}/json/include"
-  "${COMMON_DIR}/third_party/spdlog/include"
-  "${COMMON_DIR}/tools/thread"
-  "${COMMON_DIR}/tools/logger"
-  "${COMMON_DIR}/tools/net"
-  "${COMMON_DIR}/tools/net/http"
+  ${AINCL}
+  ${SRC_DIR}
+  ${SACS_DIR}
+  ${WRAPPERS_DIR}
+  ${SACS_DIR}/json/include
+  ${COMMON_DIR}/third_party/digestpp/algorithm
+  ${COMMON_DIR}/third_party/cpp-base64
+  ${COMMON_DIR}/third_party/spdlog/include
+  ${COMMON_DIR}/tools/thread
+  ${COMMON_DIR}/tools/logger
+  ${COMMON_DIR}/tools/net
+  ${COMMON_DIR}/tools/net/http
+  ${COMMON_DIR}/tools/net/http/websocket/server
+  ${COMMON_DIR}/tools/net/http/websocket/common
+  ${COMMON_DIR}/tools/utils
 )
 
 set(COMMON
+  ${COMMON_DIR}/third_party/cpp-base64/base64.cpp
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
   ${COMMON_DIR}/tools/thread/ThreadLoop.cpp
   ${COMMON_DIR}/tools/net/SocketContext.cpp
@@ -97,8 +97,16 @@ set(COMMON
   ${COMMON_DIR}/tools/net/Message.cpp
   ${COMMON_DIR}/tools/net/MessageBuilder.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
+  ${COMMON_DIR}/tools/net/http/HttpHeader.cpp
+  ${COMMON_DIR}/tools/net/http/HttpMessage.cpp
   ${COMMON_DIR}/tools/net/http/HttpServer.cpp
   ${COMMON_DIR}/tools/net/http/MessageBuilderHttp.cpp
+  ${COMMON_DIR}/tools/net/http/MimeTypeFinder.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/server/WebsocketServer.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketHeader.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketMessage.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketMessageBuilder.cpp
+  ${COMMON_DIR}/tools/net/http/websocket/common/WebsocketFragmentBuilder.cpp
 )
 
 set(SACS
@@ -107,9 +115,11 @@ set(SACS
   ${SACS_DIR}/ModuleManager.cpp
   ${SACS_DIR}/Proxy.cpp
   ${SACS_DIR}/ProxyServer.cpp
-  ${SACS_DIR}/HttpServerImpl.cpp
+  ${SACS_DIR}/ServerImpl.cpp
   ${SACS_DIR}/WebAppData.cpp
+  ${SACS_DIR}/SacsLib.cpp
 )
+
 
 set(JNI
   ${COMMON}

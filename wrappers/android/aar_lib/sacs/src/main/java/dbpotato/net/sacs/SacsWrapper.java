@@ -33,9 +33,12 @@ public class SacsWrapper {
 
     public static class ModuleProperty {
         public ModuleProperty(PropType type, String name, String value) {
-            this.type = type.ordinal();
-           this.name = name;
-           this.value = value;
+          this.type = type.ordinal();
+          this.name = name;
+          this.value = value;
+        }
+        public ModuleProperty(PropType type, String name) {
+          this(type, name, "");
         }
         public enum PropType {
             BUTTON,
