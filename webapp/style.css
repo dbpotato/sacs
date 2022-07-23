@@ -183,7 +183,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.toggle :focus {
+.toggle:focus {
   outline: 0;
 }
 
@@ -199,12 +199,17 @@ body {
   box-shadow: 0 1px 2px rgba(44, 44, 44, 0.2);
   transition: all 0.2s cubic-bezier(0.5, 0.1, 0.75, 1.35);
 }
+
+.tg_green:after{
+  background: #c40000;
+}
+
 .toggle:checked {
   background: #96baeb;
   transition: background-color 0.2s linear;
   border-color: #4d6791;
 }
+
 .toggle:checked:after {
   transform: translatex(33px);
 }
-

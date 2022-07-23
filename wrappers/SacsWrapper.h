@@ -35,6 +35,7 @@ struct ModuleProperty {
   enum Type {
     BUTTON = 0,
     BUTTON_SW,
+    BUTTON_SW_IN,
     TEXT,
     TEXT_BT,
     TEXT_RO,

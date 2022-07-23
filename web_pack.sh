@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(dirname "$0")
-echo "Source: $SCRIPT_DIR"
 
 cp $SCRIPT_DIR/WebAppDataTemplate.cpp $SCRIPT_DIR/WebAppData.cpp
 

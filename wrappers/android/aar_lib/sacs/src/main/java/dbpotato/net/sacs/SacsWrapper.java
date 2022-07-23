@@ -43,6 +43,7 @@ public class SacsWrapper {
         public enum PropType {
             BUTTON,
             BUTTON_SW,
+            BUTTON_SW_IN,
             TEXT,
             TEXT_BT,
             TEXT_RO,

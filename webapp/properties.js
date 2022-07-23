@@ -2,6 +2,7 @@ class PropertyType {
   // Create new instances of the same class as static attributes
   static BUTTON = new PropertyType("BUTTON");
   static BUTTON_SW = new PropertyType("BUTTON_SW");
+  static BUTTON_SW_IN = new PropertyType("BUTTON_SW_IN");
   static TEXT = new PropertyType("TEXT");
   static TEXT_BT = new PropertyType("TEXT_BT");
   static TEXT_RO = new PropertyType("TEXT_RO");
@@ -14,6 +15,7 @@ class PropertyType {
   static PropertyTypeArray = [
     PropertyType.BUTTON,
     PropertyType.BUTTON_SW,
+    PropertyType.BUTTON_SW_IN,
     PropertyType.TEXT,
     PropertyType.TEXT_BT,
     PropertyType.TEXT_RO,
@@ -127,11 +129,11 @@ class ButtonProperty extends Property {
 
 class ButtonSwitchProperty extends Property {
   constructor(module, id, label, value) {
-    super(module, id, PropertyType.BUTTON);
+    super(module, id, PropertyType.BUTTON_SW);
     this.label = label;
     this.value = value;
     this.checkbox = null;
-    this.isIndependent = true;
+    this.isIndependent = false;
     this.createNode();
   }
 
@@ -139,13 +141,10 @@ class ButtonSwitchProperty extends Property {
     super.createNode();
     this.createLabel(this.label);
 
-    let thisObj = this;
     this.checkbox = document.createElement("input");
     this.checkbox.setAttribute("type", "checkbox");
     this.checkbox.setAttribute("class", "toggle");
     this.checkbox.checked = this.value == '1' ? true : false;
-    this.checkbox.addEventListener("click", function(event){thisObj.onClicked();});
-
     this.addObj(this.checkbox);
   }
 
@@ -155,6 +154,21 @@ class ButtonSwitchProperty extends Property {
 
   setValue(value) {
     this.checkbox.checked = (value == "1");
+  }
+}
+
+class ButtonSwitchIndependentProperty extends ButtonSwitchProperty {
+  constructor(module, id, label, value) {
+    super(module, id, label, value);
+    this.type = PropertyType.BUTTON_SW_IN;
+    this.isIndependent = true;
+  }
+
+  createNode() {
+    super.createNode();
+    let thisObj = this;
+    this.checkbox.setAttribute("class", "toggle tg_green");
+    this.checkbox.addEventListener("click", function(event){thisObj.onClicked();});
   }
 
   onClicked() {

@@ -34,6 +34,9 @@
       case PropertyType.BUTTON_SW :
         property = new ButtonSwitchProperty(this, id, name, value);
         break;
+      case PropertyType.BUTTON_SW_IN :
+        property = new ButtonSwitchIndependentProperty(this, id, name, value);
+        break;
       case PropertyType.LOG :
         property = new LogProperty(this, id, name, value);
         break;

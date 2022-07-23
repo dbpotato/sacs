@@ -76,7 +76,8 @@ It is always an index of property in the vector passed during *Module* registrat
 |              | HTML Representation       | Is Read Only | Is Independent
 |--------------|---------------------------|--------------|---------------|
 | BUTTON       | div button                | Yes          | Yes
-| BUTTON_SW    | input / checkbox          | No           | Yes
+| BUTTON_SW    | input / checkbox          | No           | No
+| BUTTON_SW_IN | input / checkbox          | No           | Yes
 | TEXT         | input / text              | No           | No
 | TEXT_BT      | input / text + div button | No           | Yes
 | TEXT_RO      | input / text              | Yes          | Yes
