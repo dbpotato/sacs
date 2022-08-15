@@ -24,8 +24,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include "JsonMsg.h"
+#include "ThreadLoop.h"
 
-#include <atomic>
+#include <future>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -76,7 +77,7 @@ public:
                      void(callback)(int, int, const int*, const char* const*));
 
   /**
-  * Adds a new module received by ProxyServer
+  * Adds a new module
   * \param module new module
   * \return id of registered module
   */
@@ -122,6 +123,7 @@ protected:
   */
   void Init();
 
+private:
   /**
   * Save properties current values
   * \param module_id related module's id
@@ -134,32 +136,41 @@ protected:
   * \param module_id related module's id
   * \param properties list with properties : property_id | property_value
   */
-  void SaveProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties);
+  void SavePropertiesList(int module_id, std::vector<std::pair<int, std::string> > properties);
 
-private:
+  /**
+  * Internal async add new module
+  * \param module new module
+  * \return id of registered module
+  */
+  std::future<int> RegisterModuleAsync(std::shared_ptr<Module> module);
+
+  /**
+  * Internal thread-safe add new module
+  * \param module new module
+  * \param promise return value handler
+  */
+  void DoRegisterModule(std::shared_ptr<Module> module,
+                        std::shared_ptr<std::promise<int>> promise);
+
+  /**
+  * Internal async processing of request
+  * \param json prased request object
+  * \return response string
+  */
+  std::future<std::string> ProcessJSRequestAsync(const JsonMsg& json);
+
+  /**
+  * Internal thread-safe processing of request
+  * \param json prased request object
+  * \param promise return value handler
+  */
+  void DoProcessJSRequest(JsonMsg json, std::shared_ptr<std::promise<std::string>> promise);
 
   /** Pass msg to HttpSerer or Proxy
    * \param msg string with json message
    */
   void HandleMessage(const std::string& msg);
-
-  /**
-   * Adds new module to _modules collection
-   * \param module module to add
-   */
-  void AddModule(std::shared_ptr<Module> module);
-  /**
-   * Removes module from _modules collection
-   * \param module_id id of module
-   */
-  void RemoveModule(int module_id);
-
-  /**
-   * Returns module from _modules collection
-   * \param module_id id of module
-   * \return module shared pointer. Can be empty.
-   */
-  std::shared_ptr<Module> GetModuleById(int module_id);
 
   int _port; ///< listening port for HttpServer
   std::shared_ptr<Connection> _connection; ///< used by Proxy and HttpServer
@@ -171,6 +182,6 @@ private:
   std::vector<std::string> _msg_queue; ///< used for storing request before Proxy is initialized
 
   int _id_counter; ///< used for creating next module's id
-  std::atomic_bool _initialized; ///< false before Proxy is initialized
-  std::mutex _mutex; ///< used to sync access to _modules
+  bool _initialized; ///< false before Proxy is initialized
+  std::shared_ptr<ThreadLoop> _thread_loop; ///<internal thread for synchronization
 };

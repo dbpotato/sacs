@@ -42,8 +42,11 @@ ModuleManager::ModuleManager(int port, std::shared_ptr<Connection> connection)
     , _connection(connection)
     , _id_counter(0)
     , _initialized(false) {
-  if(!_connection)
+  if(!_connection) {
     _connection = Connection::CreateBasic();
+  }
+  _thread_loop = std::make_shared<ThreadLoop>();
+  _thread_loop->Init();
 }
 
 void ModuleManager::Init() {
@@ -52,7 +55,13 @@ void ModuleManager::Init() {
 }
 
 void ModuleManager::OnProxyInitialized(bool host_mode) {
+  if(_thread_loop->OnDifferentThread()) {
+    _thread_loop->Post(std::bind(&ModuleManager::OnProxyInitialized, shared_from_this(), host_mode));
+    return;
+  }
+
   log()->info("Running in Host Mode : {}", host_mode); 
+
   if(host_mode) {
     _ws_server = std::make_shared<WebsocketServer>();
     _server_impl = std::make_shared<ServerImpl>(shared_from_this());
@@ -75,14 +84,17 @@ void ModuleManager::OnProxyInitialized(bool host_mode) {
 }
 
 void ModuleManager::HandleMessage(const std::string& msg) {
+  if(_thread_loop->OnDifferentThread()) {
+    _thread_loop->Post(std::bind(&ModuleManager::HandleMessage, shared_from_this(), msg));
+    return;
+  }
+
   if(!_initialized) {
     _msg_queue.push_back(msg);
     return;
-  }
-  else if(_server_impl) {
+  } else if(_server_impl) {
     _server_impl->PushMsgForJS(msg);
-  }
-  else {
+  } else {
     _proxy->PushMsgForJS(msg);
   }
 }
@@ -95,18 +107,40 @@ int ModuleManager::RegisterModule(const std::string& name,
 }
 
 int ModuleManager::RegisterModule(std::shared_ptr<Module> module) {
-  AddModule(module);
-  HandleMessage(JsonMsg::CreateModuleAdded(module));
-  return module->_id;
+  auto feature = RegisterModuleAsync(module);
+  feature.wait();
+  return feature.get();
 }
 
+std::future<int> ModuleManager::RegisterModuleAsync(std::shared_ptr<Module> module) {
+  auto promise = std::make_shared<std::promise<int>>();
+  _thread_loop->Post(std::bind(&ModuleManager::DoRegisterModule, shared_from_this(), module, promise));
+  return promise->get_future();
+}
+
+void ModuleManager::DoRegisterModule(std::shared_ptr<Module> module,
+                                     std::shared_ptr<std::promise<int>> promise) {
+  int mod_id = _id_counter++;
+  module->SetId(mod_id);
+  _modules.insert(std::make_pair(mod_id, module));
+
+  HandleMessage(JsonMsg::CreateModuleAdded(module));
+
+  promise->set_value(mod_id);
+}
+
+
 void ModuleManager::UnregisterModule(int module_id) {
-  RemoveModule(module_id);
+  if(_thread_loop->OnDifferentThread()) {
+    _thread_loop->Post(std::bind(&ModuleManager::UnregisterModule, shared_from_this(), module_id));
+    return;
+  }
+  _modules.erase(module_id);
   HandleMessage(JsonMsg::CreateModuleRemoved(module_id));
 }
 
 void ModuleManager::UpdateProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {
-  SaveProperties(module_id, properties);
+  SavePropertiesList(module_id, properties);
   HandleMessage(JsonMsg::CreatePropertyUpdated(module_id, properties));
 }
 
@@ -118,11 +152,25 @@ void ModuleManager::UpdateProperties(int module_id, JsonMsg& json) {
 void ModuleManager::SaveProperties(int module_id, JsonMsg& json) {
   std::vector<std::pair<int, std::string>> properties;
   json.GetPropertiesList(properties);
-  SaveProperties(module_id, properties);
+  SavePropertiesList(module_id, properties);
 }
 
-void ModuleManager::SaveProperties(int module_id, const std::vector<std::pair<int, std::string> >& properties) {
-  auto module = GetModuleById(module_id);
+void ModuleManager::SavePropertiesList(int module_id, std::vector<std::pair<int, std::string> > properties) {
+
+  if(_thread_loop->OnDifferentThread()) {
+    _thread_loop->Post(std::bind(&ModuleManager::SavePropertiesList, shared_from_this(), module_id, properties));
+    return;
+  }
+
+  std::shared_ptr<Module> module;
+  auto it = _modules.find(module_id);
+  if(it != _modules.end()) {
+    module = it->second;
+  }
+
+  if(!module) {
+    return;
+  }
 
   for(size_t i = 0; i < properties.size(); ++i) {
     int id = properties.at(i).first;
@@ -133,24 +181,52 @@ void ModuleManager::SaveProperties(int module_id, const std::vector<std::pair<in
 
 std::string ModuleManager::ProcessJSRequest(const std::string& str) { 
   JsonMsg json;
-  if(!json.Parse(str))
+  if(!json.Parse(str)) {
     return JsonMsg::Empty();
+  }
+  auto future = ProcessJSRequestAsync(json);
+  future.wait();
+  return future.get();
+}
 
+std::future<std::string> ModuleManager::ProcessJSRequestAsync(const JsonMsg& json) {
+  auto promise = std::make_shared<std::promise<std::string>>();
+  _thread_loop->Post(std::bind(&ModuleManager::DoProcessJSRequest, shared_from_this(), json, promise));
+  return promise->get_future();
+}
+
+void ModuleManager::DoProcessJSRequest(JsonMsg json, std::shared_ptr<std::promise<std::string>> promise) {
+  std::string result = JsonMsg::Empty();
   switch(json.GetType()) {
     case JsonMsg::Type::REQ_LOAD:
-      return JsonMsg::CreateModuleList(_modules);
+      result = JsonMsg::CreateModuleList(_modules);
     case JsonMsg::Type::REQ_APPLY:
       PassPropertyUpdateToModule(json);
       break;
     default:
       break;
   }
-  return JsonMsg::Empty();
+  promise->set_value(result);
 }
 
+
 void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
+
+  if(_thread_loop->OnDifferentThread()) {
+    _thread_loop->Post(std::bind(&ModuleManager::PassPropertyUpdateToModule, shared_from_this(), json));
+    return;
+  }
+
   int module_id = json.FindId();
-  auto module = GetModuleById(module_id);
+  std::shared_ptr<Module> module;
+  auto it = _modules.find(module_id);
+  if(it != _modules.end()) {
+    module = it->second;
+  }
+
+  if(!module) {
+    return;
+  }
 
   std::vector<std::pair<int, std::string>> properties;
   json.GetPropertiesList(properties);
@@ -158,7 +234,7 @@ void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
   if(!properties.size())
     return;
 
-  SaveProperties(module_id,  properties);
+  SavePropertiesList(module_id,  properties);
 
   if(!module->_callback) {
     _proxy->HandlePropertyUpdate(json);
@@ -195,25 +271,3 @@ void ModuleManager::PassPropertyUpdateToModule(JsonMsg& json) {
   delete[] prop_vals;
 }
 
-
-void ModuleManager::RemoveModule(int module_id) {
-  std::lock_guard<std::mutex> lock(_mutex);
-  _modules.erase(module_id);
-}
-
-void ModuleManager::AddModule(std::shared_ptr<Module> module) {
-  std::lock_guard<std::mutex> lock(_mutex);
-  int mod_id = _id_counter++;
-  module->SetId(mod_id);
-  _modules.insert(std::make_pair(mod_id, module));
-}
-
-std::shared_ptr<Module> ModuleManager::GetModuleById(int module_id) {
-  std::lock_guard<std::mutex> lock(_mutex);
-  std::shared_ptr<Module> module;
-  auto it = _modules.find(module_id);
-  if(it != _modules.end()) {
-    module = it->second;
-  }
-  return module;
-}
