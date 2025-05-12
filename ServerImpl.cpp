@@ -23,6 +23,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "ServerImpl.h"
+
+#include "DataResource.h"
 #include "Message.h"
 #include "MimeTypeFinder.h"
 #include "WebsocketMessage.h"
@@ -56,7 +58,13 @@ bool ServerImpl::OnWsClientConnected(std::shared_ptr<Client> client, const std::
 
 void ServerImpl::OnWsClientMessage(std::shared_ptr<Client> client, std::shared_ptr<WebsocketMessage> message) {
   if(auto module_mgr = _module_mgr.lock()) {
-    std::string msg_str = message->ToString();
+    auto msg_resource = message->GetResource();
+    if(msg_resource->UseDriveCache()) {
+      log()->error("ServerImpl : unexpected large WebsocketMessage");
+      return;
+    }
+    std::string msg_str = msg_resource->GetMemCache()->ToString();
+
     std::string response = module_mgr->ProcessJSRequest(msg_str);
     auto ws_msg = std::make_shared<WebsocketMessage>(response);
     client->Send(ws_msg);
@@ -71,7 +79,7 @@ void ServerImpl::PushMsgForJS(const std::string& msg) {
   std::lock_guard<std::mutex> lock(_event_listeners_mutex);
 
   for(auto it = _event_listeners.begin(); it != _event_listeners.end();) {
-    auto msg_obj = (std::make_shared<WebsocketMessage>(msg))->ConvertToBaseMessage();
+    auto msg_obj = std::make_shared<WebsocketMessage>(msg);
     if(auto client = it->second.lock()) {
       client->Send(msg_obj);
       it++;
@@ -97,7 +105,7 @@ void ServerImpl::PerpareHTTPGetResponse(HttpRequest& request) {
     return;
   }
   request._response_msg = std::make_shared<HttpMessage>(200, body);
-  request._response_msg->GetHeader()->AddField(HttpHeaderField::CONTENT_TYPE, MimeTypeFinder::Find(name));
+  request._response_msg->GetHeader()->SetField(HttpHeaderField::CONTENT_TYPE, MimeTypeFinder::Find(name));
 }
 
 void ServerImpl::AddEventListener(std::shared_ptr<Client> client) {

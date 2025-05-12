@@ -53,17 +53,18 @@ public :
   /**
    * Implements ClientManager interface
    */
-  bool OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
+  void OnClientConnected(std::shared_ptr<Client> client) override;
+
+  /**
+   * Implements ClientManager interface
+   */
+
+  bool OnClientConnecting(std::shared_ptr<Client> client, NetError err) override;
 
   /**
    * Implements ClientManager interface
    */
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
-
-  /**
-   * Implements ClientManager interface
-   */
-  bool IsRaw() override;
 
   /**
    * Send message to proxy server in another SACS instance

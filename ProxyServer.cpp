@@ -23,7 +23,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "ProxyServer.h"
 #include "Connection.h"
+#include "DataResource.h"
 #include "Server.h"
+#include "SimpleMessage.h"
 #include "ModuleManager.h"
 #include "Message.h"
 #include "Logger.h"
@@ -71,8 +73,21 @@ std::pair<int, uint32_t> ProxyServer::RemoteIdFromLocal(int local_id) {
   return std::make_pair(-1,-1);
 }
 
+bool ProxyServer::OnClientConnecting(std::shared_ptr<Client> client, NetError err) {
+  if(err == NetError::OK) {
+    auto msg_builder = std::unique_ptr<SimpleMessageBuilder>(new SimpleMessageBuilder());
+    client->SetMsgBuilder(std::move(msg_builder));
+    return true;
+  }
+  return false;
+}
+
 void ProxyServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
-  std::string str = msg->ToString();
+  std::shared_ptr<SimpleMessage> simple_msg = std::static_pointer_cast<SimpleMessage>(msg);
+  auto msg_content = simple_msg->GetContent();
+  auto msg_data = msg_content->GetMemCache();
+  std::string str = msg_data->ToString();
+
   JsonMsg json;
   if(!json.Parse(str))
     return;
@@ -116,10 +131,6 @@ void ProxyServer::HandlePropertyUpdate(JsonMsg& json) {
   std::shared_ptr<Client> client = _server->GetClient(remote.second);
   if(client) {
     json.SetId(remote.first);
-    client->Send(std::make_shared<Message>(0,json.ToString()));
+    client->Send(std::make_shared<SimpleMessage>(0,json.ToString()));
   }
-}
-
-bool ProxyServer::IsRaw() {
-  return false;
 }

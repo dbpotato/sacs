@@ -22,12 +22,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include "Proxy.h"
-#include "ProxyServer.h"
+
 #include "Connection.h"
-#include "ModuleManager.h"
-#include "Message.h"
-#include "Server.h"
+#include "DataResource.h"
 #include "Logger.h"
+#include "Message.h"
+#include "ModuleManager.h"
+#include "Server.h"
+#include "SimpleMessage.h"
+#include "ProxyServer.h"
+
 
 
 Proxy::Proxy()
@@ -45,14 +49,19 @@ void Proxy::Init(std::shared_ptr<Connection> connection,
   _connection->CreateClient(_port, "127.0.0.1", shared_from_this());
 }
 
-bool Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
-  if(_initialized)
-    return (err == NetError::OK);
+void Proxy::OnClientConnected(std::shared_ptr<Client> client) {
+}
 
+bool Proxy::OnClientConnecting(std::shared_ptr<Client> client, NetError err) {
+  if(_initialized) {
+    return (err == NetError::OK);
+  }
   _initialized = true;
 
   if(err == NetError::OK) {
     _client = client;
+    auto msg_builder = std::unique_ptr<SimpleMessageBuilder>(new SimpleMessageBuilder());
+    _client->SetMsgBuilder(std::move(msg_builder));
   }
   else {
     log()->info("Create Proxy Server at port : {}", _port);
@@ -65,19 +74,19 @@ bool Proxy::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
 }
 
 void Proxy::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
+  std::shared_ptr<SimpleMessage> simple_msg = std::static_pointer_cast<SimpleMessage>(msg);
+  auto msg_content = simple_msg->GetContent();
+  auto msg_data = msg_content->GetMemCache();
+
   JsonMsg json;
-  json.Parse(msg->ToString());
+  json.Parse(msg_data->ToString());
   _module_mgr->PassPropertyUpdateToModule(json);
 }
 
 void Proxy::PushMsgForJS(const std::string& msg) {
-  _client->Send(std::make_shared<Message>(0, msg));
+  _client->Send(std::make_shared<SimpleMessage>(0, msg));
 }
 
 void Proxy::HandlePropertyUpdate(JsonMsg& json) {
   _server->HandlePropertyUpdate(json);
-}
-
-bool Proxy::IsRaw() {
-  return false;
 }

@@ -39,9 +39,9 @@ class ProxyServer : public ClientManager
 public:
   void Init(std::shared_ptr<Connection> connection, std::shared_ptr<ModuleManager> mgr, int port);
   void HandlePropertyUpdate(JsonMsg& json);
+  bool OnClientConnecting(std::shared_ptr<Client> client, NetError err) override;
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
   void OnClientClosed(std::shared_ptr<Client> client) override;
-  bool IsRaw() override;
 private:
   void AddModule(int remote_id, int local_id, uint32_t client_id);
   void RemoveModule(int local_id);
